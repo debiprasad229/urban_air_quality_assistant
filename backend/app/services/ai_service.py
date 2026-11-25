@@ -60,14 +60,19 @@ class AIService:
             },
         }
 
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": self.api_key,
+        }
+
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 for model_name in candidate_models:
                     url = (
                         f"https://generativelanguage.googleapis.com/v1beta/models/"
-                        f"{model_name}:generateContent?key={self.api_key}"
+                        f"{model_name}:generateContent"
                     )
-                    resp = await client.post(url, json=payload)
+                    resp = await client.post(url, json=payload, headers=headers)
 
                     if resp.status_code == 200:
                         data = resp.json()
