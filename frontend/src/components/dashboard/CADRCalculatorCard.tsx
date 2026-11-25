@@ -30,9 +30,12 @@ export const CADRCalculatorCard: React.FC = () => {
       }
     };
 
-    calculate();
+    const timer = setTimeout(() => {
+      void calculate();
+    }, 150);
     return () => {
       isCancelled = true;
+      clearTimeout(timer);
     };
   }, [length, width, height, existingCadr]);
 
@@ -66,6 +69,7 @@ export const CADRCalculatorCard: React.FC = () => {
           </div>
           <input
             type="range"
+            aria-label="Room Length in meters"
             min="2"
             max="12"
             step="0.5"
@@ -83,6 +87,7 @@ export const CADRCalculatorCard: React.FC = () => {
           </div>
           <input
             type="range"
+            aria-label="Room Width in meters"
             min="2"
             max="12"
             step="0.5"
@@ -100,6 +105,7 @@ export const CADRCalculatorCard: React.FC = () => {
           </div>
           <input
             type="range"
+            aria-label="Ceiling Height in meters"
             min="2.0"
             max="4.0"
             step="0.1"
@@ -112,11 +118,12 @@ export const CADRCalculatorCard: React.FC = () => {
 
       {/* Existing Purifier Optional Input */}
       <div className="mb-4">
-        <label className="text-xs text-slate-400 flex items-center justify-between mb-1">
+        <label htmlFor="existing-cadr-input" className="text-xs text-slate-400 flex items-center justify-between mb-1">
           <span>Test Existing Purifier Clean Air Delivery Rate (Optional):</span>
           <span className="text-slate-500 font-mono text-[11px]">m³/h</span>
         </label>
         <input
+          id="existing-cadr-input"
           type="number"
           placeholder="e.g. 350 m³/h (leave empty if sizing a new unit)"
           value={existingCadr || ''}

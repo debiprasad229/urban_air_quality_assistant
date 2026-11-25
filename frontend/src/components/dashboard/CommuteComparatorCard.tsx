@@ -31,9 +31,12 @@ export const CommuteComparatorCard: React.FC<CommuteComparatorCardProps> = ({
       }
     };
 
-    fetchComparison();
+    const timer = setTimeout(() => {
+      void fetchComparison();
+    }, 150);
     return () => {
       isCancelled = true;
+      clearTimeout(timer);
     };
   }, [distanceKm, currentOutdoorPm25, baselineMode, maskType]);
 

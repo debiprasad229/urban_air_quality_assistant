@@ -50,10 +50,11 @@ export const PlanRequestForm: React.FC<PlanRequestFormProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Commute Distance */}
         <div>
-          <label className="text-xs text-slate-400 block mb-1">
+          <label htmlFor="plan-commute-distance" className="text-xs text-slate-400 block mb-1">
             One-Way Commute Distance: <strong className="text-white">{distanceKm} km</strong>
           </label>
           <input
+            id="plan-commute-distance"
             type="range"
             min="1"
             max="30"
@@ -66,8 +67,9 @@ export const PlanRequestForm: React.FC<PlanRequestFormProps> = ({
 
         {/* Primary Commute Mode */}
         <div>
-          <label className="text-xs text-slate-400 block mb-1">Typical Commute Mode</label>
+          <label htmlFor="plan-commute-mode" className="text-xs text-slate-400 block mb-1">Typical Commute Mode</label>
           <select
+            id="plan-commute-mode"
             value={commuteMode}
             onChange={(e) => setCommuteMode(e.target.value)}
             className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -84,10 +86,11 @@ export const PlanRequestForm: React.FC<PlanRequestFormProps> = ({
 
       {/* Vulnerability Segment */}
       <div>
-        <label className="text-xs text-slate-400 block mb-1.5">Household Vulnerability Group</label>
-        <div className="grid grid-cols-2 gap-2">
+        <span className="text-xs text-slate-400 block mb-1.5">Household Vulnerability Group</span>
+        <div className="grid grid-cols-2 gap-2" role="group" aria-label="Household Vulnerability Group">
           <button
             type="button"
+            aria-pressed={vulnerability === 'GENERAL'}
             onClick={() => setVulnerability('GENERAL')}
             className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all text-left ${
               vulnerability === 'GENERAL'
@@ -103,6 +106,7 @@ export const PlanRequestForm: React.FC<PlanRequestFormProps> = ({
 
           <button
             type="button"
+            aria-pressed={vulnerability === 'SENSITIVE'}
             onClick={() => setVulnerability('SENSITIVE')}
             className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all text-left ${
               vulnerability === 'SENSITIVE'
@@ -120,10 +124,11 @@ export const PlanRequestForm: React.FC<PlanRequestFormProps> = ({
 
       {/* Optional Lifestyle Notes */}
       <div>
-        <label className="text-xs text-slate-400 block mb-1">
+        <label htmlFor="plan-lifestyle-notes" className="text-xs text-slate-400 block mb-1">
           Lifestyle Notes / Habit Constraints (Optional)
         </label>
         <input
+          id="plan-lifestyle-notes"
           type="text"
           placeholder="e.g. 'I walk my dog at 07:00' or 'School drop-off at 08:15'"
           value={notes}

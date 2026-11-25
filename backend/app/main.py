@@ -1,15 +1,19 @@
 """FastAPI Application Entrypoint, Middleware & Exception Handlers."""
 
+import logging
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1.router import api_v1_router
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Urban Air Quality Assistant API",
@@ -32,6 +36,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_security_headers(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+) -> Response:
+    """Attach standard security headers to all API responses."""
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
 
 
 # -------------------------------------------------------------------------
@@ -77,6 +94,7 @@ async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch-all unhandled exceptions formatted to RFC 7807 Problem Details."""
+    logger.exception("Unhandled error on %s: %s", request.url.path, exc)
     problem = {
         "type": "https://urban-air.app/errors/internal-error",
         "title": "Internal Server Error",

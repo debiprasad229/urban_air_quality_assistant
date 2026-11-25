@@ -101,6 +101,8 @@ export const Header: React.FC<HeaderProps> = ({
               <input
                 type="text"
                 aria-label="Search any city"
+                aria-expanded={showDropdown}
+                aria-controls="city-search-results"
                 placeholder="Search any city..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -115,7 +117,10 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {showDropdown && (
-              <div className="absolute left-0 right-0 mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
+              <div
+                id="city-search-results"
+                className="absolute left-0 right-0 mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50"
+              >
                 {searchResults.length > 0 ? (
                   <ul role="listbox" className="divide-y divide-slate-800 max-h-60 overflow-y-auto">
                     {searchResults.map((city) => (

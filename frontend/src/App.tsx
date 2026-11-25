@@ -204,6 +204,13 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-emerald-500 selection:text-slate-950">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 bg-emerald-500 text-slate-950 font-bold text-xs px-3 py-2 rounded-lg"
+      >
+        Skip to main content
+      </a>
+
       {/* Header */}
       <Header
         presets={presets}
@@ -219,7 +226,7 @@ export const App: React.FC = () => {
       <BackendHealthBanner status={backendHealth} onRetry={checkHealth} />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* City Summary Top Bar */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 mb-6 shadow-md flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">

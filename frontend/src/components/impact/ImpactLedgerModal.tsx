@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, TreePine, Send } from 'lucide-react';
 import { CommunityImpactSummary } from '../../api/types';
 import { apiClient } from '../../api/client';
@@ -19,6 +19,15 @@ export const ImpactLedgerModal: React.FC<ImpactLedgerModalProps> = ({
   const [actionType, setActionType] = useState<string>('TRANSIT_MODAL_SHIFT');
   const [description, setDescription] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -55,12 +64,19 @@ export const ImpactLedgerModal: React.FC<ImpactLedgerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="impact-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in"
+    >
       <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative text-slate-100">
         {/* Close Button */}
         <button
+          type="button"
+          aria-label="Close community impact modal"
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg"
+          className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -71,7 +87,7 @@ export const ImpactLedgerModal: React.FC<ImpactLedgerModalProps> = ({
             <TreePine className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-white">Community Clean Air Ledger</h2>
+            <h2 id="impact-modal-title" className="text-base font-bold text-white">Community Clean Air Ledger</h2>
             <p className="text-xs text-slate-400">
               Collective avoided emissions and inhaled dose reductions
             </p>
