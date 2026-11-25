@@ -59,7 +59,6 @@ graph TD
     LocationSearch -->|Async REST| OpenMeteoGeo[(Open-Meteo Geocoding API)]
     WeatherService -->|Async REST| OpenMeteo[(Open-Meteo Air Quality CAMS API)]
     AIOrchestrator -->|Async REST / 10s Timeout| GeminiAPI[(Google Gemini 3.5 Flash-Lite)]
-    ImpactService -.->|Async Non-Blocking / Port 6543| Supabase[(Supabase Free PostgreSQL)]
 ```
 
 ---
@@ -122,7 +121,7 @@ chmod +x run_dev.sh
 
 - **Backend (Render Free Web Service):** Deploy directly via the root [render.yaml](render.yaml) Blueprint (`rootDir: backend`, `healthCheckPath: /api/health`) or [backend/Dockerfile](backend/Dockerfile). Add `GEMINI_API_KEY` in Render Environment Variables.
 - **Frontend (Vercel Free):** Import the repository in Vercel with **Root Directory** set to `frontend` (uses [frontend/vercel.json](frontend/vercel.json)). Set `VITE_API_BASE_URL=https://<your-render-service>.onrender.com/api`.
-- **Database (Optional Supabase Free):** Apply [supabase/schema.sql](supabase/schema.sql) and connect via port `6543` transaction pooler.
+- **Stateless Privacy-by-Design:** Runs with zero external database—atmospheric caches and the community impact ledger operate safely in memory (`TTLCache` + thread-safe `RLock`), storing no user PII or health data.
 
 ---
 
@@ -146,7 +145,6 @@ urban-air-quality-assistant/
 │   │   ├── components/      # Dual-pane dashboard, Recharts diurnal chart, calculators & AI timeline
 │   │   └── tests/           # Vitest + React Testing Library suites (9 tests)
 │   └── vercel.json
-├── supabase/schema.sql
 ├── render.yaml              # Render Blueprint (root)
 ├── run_dev.ps1              # Windows launcher
 └── run_dev.sh               # Linux/macOS launcher
