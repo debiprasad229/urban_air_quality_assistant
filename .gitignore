@@ -1,0 +1,39 @@
+# Dependencies & Environments
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing & Coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage/
+
+# Build Outputs
+dist/
+build/
+*.egg-info/
+
+# Local Environment Variables
+.env
+.env.local
+.env.*.local
+*.local
+
+# IDE & OS Artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Planning, Task & Walkthrough Docs (kept local only)
+.planning/
+PRD.md
+progress.txt
+DEMO_WALKTHROUGH.md
