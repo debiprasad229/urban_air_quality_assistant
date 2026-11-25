@@ -9,6 +9,9 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from cachetools import TTLCache
+
+from app.config import settings
 from app.domain.emissions import compare_transit_alternatives
 from app.domain.physics import analyze_room_cadr
 from app.domain.rules import detect_diurnal_aeration_window, evaluate_safety_advisory
@@ -26,9 +29,31 @@ class PlannerService:
     def __init__(self, weather_service: WeatherService, ai_service: AIService) -> None:
         self.weather_service = weather_service
         self.ai_service = ai_service
+        self.plan_cache: TTLCache[tuple[Any, ...], AssistantPlanResponseDTO] = TTLCache(
+            maxsize=settings.CACHE_MAX_ENTRIES,
+            ttl=settings.CACHE_TTL_SECONDS,
+        )
+
+    def _build_cache_key(self, req: AssistantPlanRequestDTO) -> tuple[Any, ...]:
+        """Construct a composite cache key covering location and all user routine inputs."""
+        lat_c, lon_c = self.weather_service.coarsen_coordinates(req.latitude, req.longitude)
+        return (
+            lat_c,
+            lon_c,
+            round(req.commute_distance_km, 1),
+            req.default_commute_mode.strip().upper(),
+            req.vulnerability_category.strip().upper(),
+            req.user_notes.strip(),
+        )
 
     async def create_daily_plan(self, req: AssistantPlanRequestDTO) -> AssistantPlanResponseDTO:
-        """Generate a personalized daily plan with safety guardrails."""
+        """Generate a personalized daily plan with caching and safety guardrails."""
+        cache_key = self._build_cache_key(req)
+        if cache_key in self.plan_cache:
+            cached_plan = self.plan_cache[cache_key]
+            return cached_plan.model_copy(
+                update={"location_name": req.location_name or cached_plan.location_name}
+            )
         # 1. Fetch hourly weather & AQI
         aq_response = await self.weather_service.get_air_quality(
             lat=req.latitude,
@@ -96,7 +121,9 @@ class PlannerService:
                                 + slot.get("advisory_action", "")
                             )
 
-                return AssistantPlanResponseDTO.model_validate(ai_output)
+                validated_plan = AssistantPlanResponseDTO.model_validate(ai_output)
+                self.plan_cache[cache_key] = validated_plan
+                return validated_plan
             except Exception as val_exc:
                 logger.warning("AI response failed schema validation: %s", val_exc)
 

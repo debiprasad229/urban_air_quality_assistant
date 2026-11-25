@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Header } from './components/common/Header';
 import { BackendHealthBanner } from './components/common/BackendHealthBanner';
 import { AQIBadge } from './components/common/AQIBadge';
@@ -39,6 +39,18 @@ export const App: React.FC = () => {
   });
   const [isImpactModalOpen, setIsImpactModalOpen] = useState<boolean>(false);
   const [backendHealth, setBackendHealth] = useState<'checking' | 'healthy' | 'waking' | 'offline'>('checking');
+  const planCacheRef = useRef<Map<string, { plan: AssistantPlanResponse; cachedAt: number }>>(new Map());
+  const PLAN_CACHE_TTL_MS = 15 * 60 * 1000;
+
+  const buildPlanCacheKey = (preset: LocationPreset, formInput: PlanFormInput): string =>
+    JSON.stringify([
+      Number(preset.latitude.toFixed(2)),
+      Number(preset.longitude.toFixed(2)),
+      formInput.commute_distance_km,
+      formInput.default_commute_mode,
+      formInput.vulnerability_category,
+      formInput.user_notes.trim(),
+    ]);
 
   // Verify Backend Health on Mount
   const checkHealth = async () => {
@@ -81,6 +93,14 @@ export const App: React.FC = () => {
 
   const generatePlanForPreset = useCallback(
     async (preset: LocationPreset, formInput: PlanFormInput, aqSnapshot: CurrentAirQualityResponse) => {
+      const cacheKey = buildPlanCacheKey(preset, formInput);
+      const cached = planCacheRef.current.get(cacheKey);
+      if (cached && Date.now() - cached.cachedAt < PLAN_CACHE_TTL_MS) {
+        setPlanError(null);
+        setPlan({ ...cached.plan, location_name: preset.name });
+        return;
+      }
+
       setPlanLoading(true);
       setPlanError(null);
       try {
@@ -93,6 +113,9 @@ export const App: React.FC = () => {
           vulnerability_category: formInput.vulnerability_category,
           user_notes: formInput.user_notes,
         });
+        if (!generated.is_fallback_plan) {
+          planCacheRef.current.set(cacheKey, { plan: generated, cachedAt: Date.now() });
+        }
         setPlan(generated);
       } catch (err) {
         console.warn('Assistant API unavailable, using fallback schedule generator:', err);

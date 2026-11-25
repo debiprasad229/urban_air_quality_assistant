@@ -101,16 +101,28 @@ describe('App Component Dual-Pane Integration', () => {
       expect(screen.getByText(/Commute guidance for London, United Kingdom/i)).toBeInTheDocument();
     });
 
-    // Submit form to verify Synthesize Low-Emission Routine button triggers createAssistantPlan
+    // Switch back to New Delhi -> should hit client cache without another createAssistantPlan call
+    const callsBeforeSwitchBack = vi.mocked(apiClient.createAssistantPlan).mock.calls.length;
+    fireEvent.change(select, { target: { value: 'New Delhi, India' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('315')).toBeInTheDocument();
+      expect(screen.getByText(/Commute guidance for New Delhi, India/i)).toBeInTheDocument();
+    });
+    expect(vi.mocked(apiClient.createAssistantPlan).mock.calls.length).toBe(callsBeforeSwitchBack);
+
+    // Change commute mode in form and click Synthesize -> cache miss, triggers new AI call
+    const modeSelect = screen.getByLabelText(/Typical Commute Mode/i);
+    fireEvent.change(modeSelect, { target: { value: 'ELECTRIC_METRO' } });
+
     const submitBtn = screen.getByRole('button', { name: /Synthesize Low-Emission Routine/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
       expect(apiClient.createAssistantPlan).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          location_name: 'London, United Kingdom',
-          latitude: 51.5074,
-          longitude: -0.1278,
+          location_name: 'New Delhi, India',
+          default_commute_mode: 'ELECTRIC_METRO',
         })
       );
     });

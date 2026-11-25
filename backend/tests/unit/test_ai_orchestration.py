@@ -72,3 +72,52 @@ class TestPlannerService:
         assert plan.is_fallback_plan is True
         assert len(plan.daily_schedule) == 5
         assert plan.location_name == "New Delhi"
+
+    async def test_caches_ai_plans_and_recomputes_on_input_change(self) -> None:
+        weather_svc = WeatherService()
+        ai_svc = AIService()
+        ai_svc.api_key = "fake_key"
+
+        valid_ai_dict = {
+            "optimal_aeration_window": "13:00 - 13:20",
+            "avoided_exposure_estimate_ug": 20.0,
+            "avoided_co2e_estimate_kg": 1.2,
+            "impact_explanation": "Cached AI explanation",
+            "daily_schedule": [
+                {
+                    "time_window": "07:30 - 08:30",
+                    "activity": "Morning Commute",
+                    "setting": "ENCLOSED_TRANSIT",
+                    "advisory_action": "Use electric metro.",
+                    "mask_required": True,
+                    "purifier_setting": "OFF",
+                }
+            ],
+        }
+        mock_generate = AsyncMock(return_value=valid_ai_dict)
+
+        planner = PlannerService(weather_service=weather_svc, ai_service=ai_svc)
+        with patch.object(ai_svc, "generate_plan", mock_generate):
+            req_delhi = AssistantPlanRequestDTO(
+                latitude=28.6139,
+                longitude=77.2090,
+                location_name="New Delhi",
+                commute_distance_km=10.0,
+                default_commute_mode="SOLO_CAR_GASOLINE",
+                vulnerability_category="GENERAL",
+                user_notes="",
+            )
+            # 1st call for Delhi -> invokes AI
+            plan1 = await planner.create_daily_plan(req_delhi)
+            assert plan1.is_fallback_plan is False
+            assert mock_generate.await_count == 1
+
+            # 2nd call for same Delhi + same form settings -> cache hit (no new AI call)
+            plan2 = await planner.create_daily_plan(req_delhi)
+            assert plan2.is_fallback_plan is False
+            assert mock_generate.await_count == 1
+
+            # 3rd call when user changes commute distance -> cache miss (invokes AI)
+            req_changed = req_delhi.model_copy(update={"commute_distance_km": 18.0})
+            await planner.create_daily_plan(req_changed)
+            assert mock_generate.await_count == 2
