@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     CACHE_TTL_SECONDS: int = 900
     CACHE_MAX_ENTRIES: int = 512
 
+    # Rate Limiting (AI Planner protection: 5 requests per 10 minutes)
+    ASSISTANT_RATE_LIMIT_MAX_REQUESTS: int = 5
+    ASSISTANT_RATE_LIMIT_WINDOW_SECONDS: int = 600
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

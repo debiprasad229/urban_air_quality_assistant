@@ -118,8 +118,13 @@ export const App: React.FC = () => {
         }
         setPlan(generated);
       } catch (err) {
-        console.warn('Assistant API unavailable, using fallback schedule generator:', err);
-        setPlanError('Live assistant endpoint unreachable — showing offline safety schedule.');
+        console.warn('Assistant API unavailable or rate-limited, using fallback schedule:', err);
+        const errMsg = err instanceof Error ? err.message : '';
+        setPlanError(
+          errMsg.toLowerCase().includes('rate limit')
+            ? `${errMsg} Showing deterministic safety schedule.`
+            : 'Live assistant endpoint unreachable — showing offline safety schedule.'
+        );
         const isSevere = aqSnapshot.calculated_aqi >= 200;
         setPlan({
           location_name: preset.name,

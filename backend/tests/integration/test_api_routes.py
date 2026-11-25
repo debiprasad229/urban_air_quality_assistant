@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
+from app.api.deps import get_assistant_rate_limiter
 from app.main import app
 
 client = TestClient(app)
@@ -141,6 +142,37 @@ class TestAssistantEndpoints:
             assert len(data["daily_schedule"]) == 5
             assert "avoided_co2e_estimate_kg" in data
             assert "disclaimer" in data
+
+    def test_assistant_plan_rate_limit_5_per_10_mins(self) -> None:
+        limiter = get_assistant_rate_limiter()
+        limiter.reset()
+        mock_resp = AsyncMock()
+        mock_resp.status_code = 200
+        mock_resp.json = lambda: MOCK_METEO_PAYLOAD
+
+        payload = {
+            "latitude": 28.6139,
+            "longitude": 77.2090,
+            "location_name": "New Delhi",
+            "commute_distance_km": 10.0,
+            "vulnerability_category": "GENERAL",
+        }
+        headers = {"X-Forwarded-For": "203.0.113.42"}
+
+        try:
+            with patch("httpx.AsyncClient.get", return_value=mock_resp):
+                for _ in range(5):
+                    ok_resp = client.post("/api/v1/assistant/plan", json=payload, headers=headers)
+                    assert ok_resp.status_code == 200
+
+                blocked_resp = client.post("/api/v1/assistant/plan", json=payload, headers=headers)
+                assert blocked_resp.status_code == 429
+                assert "Retry-After" in blocked_resp.headers
+                problem = blocked_resp.json()
+                assert problem["error_code"] == "RATE_LIMIT_EXCEEDED"
+                assert "5" in problem["detail"]
+        finally:
+            limiter.reset()
 
 
 class TestImpactEndpoints:

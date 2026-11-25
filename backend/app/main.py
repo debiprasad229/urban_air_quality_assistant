@@ -5,7 +5,7 @@ from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import FastAPI, Request, Response, status
+from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -89,6 +89,35 @@ async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=problem)
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    """Format HTTPExceptions (including 429 rate limits) to RFC 7807 Problem Details."""
+    error_code = (
+        "RATE_LIMIT_EXCEEDED"
+        if exc.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+        else "HTTP_ERROR"
+    )
+    title = (
+        "Rate Limit Exceeded"
+        if exc.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+        else "Request Error"
+    )
+    problem = {
+        "type": f"https://urban-air.app/errors/{error_code.lower()}",
+        "title": title,
+        "status": exc.status_code,
+        "detail": str(exc.detail),
+        "instance": str(request.url.path),
+        "error_code": error_code,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=problem,
+        headers=dict(exc.headers) if exc.headers else None,
+    )
 
 
 @app.exception_handler(Exception)
