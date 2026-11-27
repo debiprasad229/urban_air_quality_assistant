@@ -8,7 +8,7 @@
 [![TypeScript](https://img.shields.io/badge/Types-Strict_TypeScript-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Styles-Tailwind_CSS-38B2AC.svg?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![100% Free Tier](https://img.shields.io/badge/Hosting-100%25_Free_Tier-10B981.svg)](#5-100-free-tier-deployment)
-[![Tests Passing](https://img.shields.io/badge/Tests-80%2F80_Passing-brightgreen.svg)](#7-test-suite--quality-verification)
+[![Tests Passing](https://img.shields.io/badge/Tests-82%2F82_Passing-brightgreen.svg)](#7-test-suite--quality-verification)
 
 ---
 
@@ -82,6 +82,14 @@ The application contains **zero hallucinated numbers**. All quantitative metrics
    - Diesel Bus: $82.0\text{ g } CO_2e/\text{km}$, $0.0035\text{ g } \text{PM}_{2.5}/\text{km}$
    - Electric Metro: $25.0\text{ g } CO_2e/\text{km}$ (grid upstream), $0.0\text{ g } \text{PM}_{2.5}/\text{km}$
    - Bicycle / Walking: $0.0\text{ g } CO_2e/\text{km}$, $0.0\text{ g } \text{PM}_{2.5}/\text{km}$
+
+### 3.1 Key Modeling & Operational Assumptions
+- **Chosen Vertical:** Challenge 6 — Urban Air Quality Assistant (winter smog & thermal inversion decision support).
+- **Enclosed Transit Passive Filtration:** Enclosed vehicles and electric metro cars (`SOLO_CAR_GASOLINE`, `CAR_EV`, `ELECTRIC_METRO`) are modeled with ~30% passive particulate attenuation compared to open roadside air.
+- **Indoor Smog Containment:** Room purifier sizing targets **4.5 ACH** (ANSI/AHAM AC-1 wildfire/smog containment standard) assuming a well-mixed indoor zone.
+- **Solar Aeration Window:** Midday convective boundary layer mixing (`11:00–16:00` local solar time) is only recommended for rapid 15-minute cross-ventilation when forecasted $\text{PM}_{2.5} < 150\ \mu\text{g/m}^3$.
+- **Privacy & Stateless Caching:** Coordinates are coarsened to 2 decimal places (~1.1 km), weather/AI plans use a 15-minute `TTLCache`, and the community impact ledger runs in memory without persisting user PII or health data.
+- **AI Rate Limiting:** `POST /api/v1/assistant/plan` enforces 5 requests per 10 minutes per IP, seamlessly falling back to the deterministic planner when exceeded.
 
 ---
 
@@ -157,9 +165,9 @@ urban-air-quality-assistant/
 ```bash
 # Backend Quality Checks
 cd backend
-.venv\Scripts\python -m pytest -v          # 71 passed (100% pass)
+.venv\Scripts\python -m pytest -v          # 73 passed (100% pass)
 .venv\Scripts\python -m ruff check app tests # 0 errors
-.venv\Scripts\python -m mypy app            # 0 errors across 31 source files
+.venv\Scripts\python -m mypy app            # 0 errors across 32 source files
 
 # Frontend Quality Checks
 cd ../frontend
